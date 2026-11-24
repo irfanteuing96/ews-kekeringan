@@ -13,7 +13,8 @@ Lokasi: satu wilayah sawah di Kendari, Sulawesi Tenggara (titik data iklim −4,
 
 ## Cara pakai
 
-1. **① Data lahan & waktu tanam**: isi nama wilayah, dasarian tanam, tekstur tanah / AWC,
+1. **① Data lahan & waktu tanam**: isi nama wilayah, dasarian tanam, tekstur tanah / AWC
+   (AWC dipilih per rentang: ≥160, 130–159, 100–129, 70–99, <70 mm/m; "Tidak tahu" → pakai tekstur),
    perkolasi (→ dipakai menghitung **V**), lalu irigasi, embung, pompa (→ dipakai menghitung **C**).
 2. Klik **⚡ Generate prakiraan 12 dasarian**.
 3. **② Kondisi per dasarian**: tabel 12 baris. Klik satu baris untuk melihat rincian hitungan dan rekomendasinya

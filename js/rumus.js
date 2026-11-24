@@ -112,15 +112,18 @@
   // -------------------------------------------------------------------
 
   // Subbab 3.2.1 — Skor tanah St. Pakai AWC (mm/m) bila ada; kalau null pakai tekstur.
+  // Dari form, awc_mm_per_m = batas bawah rentang yang dipilih (mis. 130 untuk "130–159 mm/m").
   function skorTanah(petak) {
     if (petak.awc_mm_per_m !== null && petak.awc_mm_per_m !== undefined) {
-      return { skor: skorDariMin(petak.awc_mm_per_m, CFG().skorAwc), dasar: `AWC ${petak.awc_mm_per_m} mm/m` };
+      const kelas = CFG().skorAwc.find((b) => petak.awc_mm_per_m >= b.min);
+      return { skor: kelas.skor, dasar: `AWC ${kelas.label}` };
     }
     const skor = CFG().skorTekstur[String(petak.tekstur).toLowerCase()] ?? 3;
-    return { skor, dasar: `tekstur ${petak.tekstur} (AWC tidak ada)` };
+    return { skor, dasar: `tekstur ${petak.tekstur} (AWC tidak diketahui)` };
   }
 
-  // Subbab 3.2.2 — Skor perkolasi Sp (mm/hari): <1→1, 1–<3→2, 3–<6→3, 6–<10→4, ≥10→5.
+  // Subbab 3.2.2 — Skor perkolasi Sp (mm/hari): <1→1, 1–<3→2, 3–<6→3, 6–<12→4, ≥12→5.
+  // Perkolasi tetap diisi ANGKA karena nilainya juga dipakai di kebutuhan air (L) pada C.
   function skorPerkolasi(perkolasiMmHari) {
     return skorDariMax(perkolasiMmHari, CFG().skorPerkolasi);
   }

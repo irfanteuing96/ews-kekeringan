@@ -56,10 +56,18 @@
       .join("");
     $("inDasarianTanam").value = Math.max(0, DATA.findIndex((d) => d.kunci === K.dasarianTanamAwal));
     $("inTekstur").innerHTML = Object.keys(K.skorTekstur).map((t) => `<option value="${t}">${t}</option>`).join("");
+    // AWC dipilih per rentang (kelas skor St). Nilai option = batas bawah rentang.
+    $("inAwc").innerHTML = `<option value="">Tidak tahu → pakai tekstur tanah</option>` +
+      K.skorAwc.map((b) => `<option value="${b.min}">${b.label} · ${b.contoh}</option>`).join("");
 
     $("inNama").value = L0.nama;
     $("inTekstur").value = L0.tekstur;
-    $("inAwc").value = L0.awc_mm_per_m ?? "";
+    // Nilai awal AWC (angka di data-lahan.js) → rentang yang memuatnya.
+    $("inAwc").value = L0.awc_mm_per_m == null ? "" : K.skorAwc.find((b) => L0.awc_mm_per_m >= b.min).min;
+    // Tekstur hanya dipakai bila AWC tidak diketahui → nonaktifkan bila AWC dipilih.
+    const aturTekstur = () => { $("inTekstur").disabled = $("inAwc").value !== ""; };
+    $("inAwc").addEventListener("change", aturTekstur);
+    aturTekstur();
     $("inPerkolasi").value = L0.perkolasi_mm_hari;
     $("inIrigasi").value = L0.irigasi_mm_hari;
     $("inEmbung").value = L0.embung_m3;

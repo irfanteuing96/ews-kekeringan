@@ -59,12 +59,14 @@ window.CONFIG = {
 
   // ---------------- Kerentanan V (Subbab 3.2) ----------------
   // Skor tanah dari AWC (mm/m): dibaca dari atas, ambil baris pertama yang "AWC ≥ min".
+  // Di form, AWC dipilih per RENTANG (dropdown), karena skornya memang per kelas.
+  //   label = teks rentang · contoh = tekstur yang biasanya masuk rentang itu (perkiraan FAO-56)
   skorAwc: [
-    { min: 160, skor: 1 },
-    { min: 130, skor: 2 },
-    { min: 100, skor: 3 },
-    { min: 70, skor: 4 },
-    { min: -Infinity, skor: 5 },
+    { min: 160, skor: 1, label: "≥ 160 mm/m", contoh: "sangat tinggi, mis. lempung berdebu" },
+    { min: 130, skor: 2, label: "130–159 mm/m", contoh: "tinggi, mis. lempung" },
+    { min: 100, skor: 3, label: "100–129 mm/m", contoh: "sedang" },
+    { min: 70, skor: 4, label: "70–99 mm/m", contoh: "rendah, berpasir" },
+    { min: 0, skor: 5, label: "< 70 mm/m", contoh: "sangat rendah, pasir" },
   ],
   // Skor tanah dari tekstur (dipakai jika AWC = null). Kunci huruf kecil.
   skorTekstur: {

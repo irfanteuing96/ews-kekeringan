@@ -268,3 +268,6 @@ table.kinerja td.terbaik { color: var(--hijau); font-weight: 800; }
 table.kinerja td .kecil { font-weight: 400; }
 @media (max-width: 1100px) { .grid-cuaca { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .kartu-cuaca { grid-template-columns: 1fr 1fr; } }
+
+/* Tekstur nonaktif saat AWC dipilih */
+select:disabled { opacity: 0.45; cursor: not-allowed; }
