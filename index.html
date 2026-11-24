@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistem Peringatan Dini Kekeringan Sawah – Kendari</title>
+
+  <!-- Font & library lewat CDN (tidak perlu instal apa pun) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- 1. HEADER -->
+  <header class="header">
+    <div class="header-judul">
+      <div class="logo">🌾</div>
+      <div>
+        <h1>Sistem Peringatan Dini Kekeringan Sawah</h1>
+        <p class="subjudul">Kendari, Sulawesi Tenggara · prakiraan satu musim tanam (12 dasarian ≈ 4 bulan)</p>
+      </div>
+    </div>
+    <div class="kanan-header">
+      <div class="lencana-grup">
+        <span class="lencana">✔ Data otomatis per dasarian</span>
+        <span class="lencana">✔ Model prediksi</span>
+        <span class="lencana">✔ Simulasi skenario</span>
+      </div>
+      <!-- Pengguna sasaran: tampilan berubah sesuai peran (prototipe, tanpa login) -->
+      <label class="pilih-peran">👤 Masuk sebagai
+        <select id="inPeran"></select>
+      </label>
+      <div class="keterangan-peran" id="ketPeran"></div>
+    </div>
+  </header>
+
+  <main class="kontainer">
+    <!-- 2. FORM DATA LAHAN + PETA -->
+    <section class="grid-input" data-bagian="input">
+      <form class="kartu" id="formLahan" autocomplete="off">
+        <div class="kepala-kartu">
+          <h2>① Data lahan & waktu tanam</h2>
+          <span class="petunjuk">isi lalu klik Generate</span>
+        </div>
+
+        <div class="form-grup">
+          <label class="lebar-penuh">Nama wilayah
+            <input type="text" id="inNama" required />
+          </label>
+          <label class="lebar-penuh">Dasarian tanam (tanggal tanam)
+            <select id="inDasarianTanam"></select>
+          </label>
+        </div>
+
+        <fieldset>
+          <legend>Kerentanan V — kondisi tanah</legend>
+          <div class="form-grup">
+            <label>Tekstur tanah
+              <select id="inTekstur"></select>
+            </label>
+            <label>AWC (mm/m)  <span class="opsional">kosongkan bila tidak ada</span>
+              <input type="number" id="inAwc" min="0" step="1" placeholder="pakai tekstur" />
+            </label>
+            <label>Perkolasi (mm/hari)
+              <input type="number" id="inPerkolasi" min="0" step="0.1" required />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Kapasitas C — sumber air</legend>
+          <div class="form-grup">
+            <label>Irigasi saluran (mm/hari)
+              <input type="number" id="inIrigasi" min="0" step="0.1" required />
+            </label>
+            <label>Embung (m³)  <span class="opsional">0 = tidak ada</span>
+              <input type="number" id="inEmbung" min="0" step="10" required />
+            </label>
+            <label>Debit pompa (L/detik)  <span class="opsional">0 = tidak ada</span>
+              <input type="number" id="inPompaDebit" min="0" step="0.5" required />
+            </label>
+            <label>Jam pompa per hari
+              <input type="number" id="inPompaJam" min="0" max="24" step="1" required />
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="baris-tombol">
+          <button type="submit" class="tombol tombol-utama">⚡ Generate prakiraan 12 dasarian</button>
+          <span class="petunjuk" id="infoForm"></span>
+        </div>
+      </form>
+
+      <div class="kartu kartu-peta">
+        <div class="kepala-kartu">
+          <h2>Peta wilayah</h2>
+          <span class="petunjuk" id="infoPeta">warna = status dasarian terpilih</span>
+        </div>
+        <div id="peta"></div>
+        <div class="legenda" id="legenda"></div>
+      </div>
+    </section>
+
+    <!-- 3. KARTU RINGKASAN -->
+    <section class="grid-ringkasan" data-bagian="ringkasan">
+      <div class="kartu ringkasan">
+        <div class="label-kecil">Status tertinggi musim ini</div>
+        <div class="angka-besar" id="ringkasStatusMaks">–</div>
+        <div class="keterangan" id="ringkasStatusMaksKet">–</div>
+      </div>
+      <div class="kartu ringkasan">
+        <div class="label-kecil">Jumlah dasarian per status</div>
+        <div class="daftar-status" id="ringkasStatus"></div>
+      </div>
+      <div class="kartu ringkasan">
+        <div class="label-kecil">Puncak bahaya H (SPI × SPEI prediksi RF)</div>
+        <div class="angka-besar" id="ringkasH">–</div>
+        <div class="keterangan" id="ringkasHKet">–</div>
+      </div>
+      <div class="kartu ringkasan">
+        <div class="label-kecil">Total hujan 4 bulan (prediksi RF)</div>
+        <div class="angka-besar"><span id="ringkasHujan">–</span><small> mm</small></div>
+        <div class="keterangan" id="ringkasHujanKet">–</div>
+      </div>
+    </section>
+
+    <!-- 4. TABEL 12 DASARIAN + DETAIL -->
+    <section class="grid-tabel" data-bagian="tabel">
+      <div class="kartu">
+        <div class="kepala-kartu">
+          <h2>② Kondisi per dasarian <span class="redup" id="judulTabel"></span></h2>
+          <span class="petunjuk">klik baris untuk rincian</span>
+        </div>
+        <div class="wadah-tabel"><table class="tabel-prakiraan" id="tabelPrakiraan"></table></div>
+      </div>
+      <aside class="kartu panel-detail" id="panelDetail">
+        <div class="kosong">Klik Generate untuk melihat prakiraan.</div>
+      </aside>
+    </section>
+
+    <!-- 4b. DATA CUACA (input model dari Excel NASA POWER / BMKG) -->
+    <section class="grid-cuaca" data-bagian="cuaca">
+      <div class="kartu">
+        <div class="kepala-kartu">
+          <h2>Data cuaca dasarian terpilih <span class="redup" id="judulCuaca"></span></h2>
+          <span class="petunjuk">rata-rata harian · NASA POWER</span>
+        </div>
+        <div class="kartu-cuaca" id="kartuCuaca"></div>
+        <div class="neraca-air" id="neracaAir"></div>
+      </div>
+      <div class="kartu">
+        <div class="kepala-kartu">
+          <h2>Curah hujan & ET₀ per dasarian</h2>
+          <span class="petunjuk">arsir hijau = musim tanam terpilih</span>
+        </div>
+        <div class="kanvas-wadah"><canvas id="grafikHujan"></canvas></div>
+      </div>
+      <div class="kartu lebar-penuh">
+        <div class="kepala-kartu">
+          <h2>Tabel data cuaca 12 dasarian <span class="redup">· yang dipakai menghitung H dan C</span></h2>
+          <span class="petunjuk">klik baris untuk memilih dasarian</span>
+        </div>
+        <div class="wadah-tabel"><table class="tabel-prakiraan tabel-cuaca" id="tabelCuaca"></table></div>
+        <div class="catatan" id="catatanCuaca"></div>
+      </div>
+    </section>
+
+    <!-- 5. SIMULASI + WHATSAPP -->
+    <section class="grid-simulasi">
+      <div class="kartu" data-bagian="simulasi">
+        <div class="kepala-kartu">
+          <h2>③ Simulasi skenario <span class="redup">· berlaku untuk ke-12 dasarian</span></h2>
+          <button class="tombol" id="tombolReset">↺ Reset</button>
+        </div>
+        <div id="sliderSkenario" class="slider-skenario"></div>
+        <div class="hasil-simulasi" id="hasilSimulasi"></div>
+      </div>
+      <div class="kartu" data-bagian="wa">
+        <div class="kepala-kartu">
+          <h2>Pratinjau notifikasi WhatsApp</h2>
+          <span class="petunjuk">hanya pratinjau, tidak dikirim</span>
+        </div>
+        <div class="wa-layar">
+          <div class="wa-kepala">
+            <div class="wa-avatar">🌾</div>
+            <div><div class="wa-nama">EWS Kekeringan Kendari</div><div class="wa-sub">akun otomatis</div></div>
+          </div>
+          <div class="wa-isi"><div class="wa-bubble" id="pesanWa"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. LAPORAN LAPANGAN (umpan balik → validasi & tuning ulang model) -->
+    <section class="grid-laporan">
+      <form class="kartu" id="formLaporan" data-bagian="laporan" autocomplete="off">
+        <div class="kepala-kartu">
+          <h2>④ Laporan lapangan</h2>
+          <span class="petunjuk">kondisi sawah sebenarnya</span>
+        </div>
+        <div class="form-grup">
+          <label>Dasarian yang dilaporkan
+            <select id="lapDasarian"></select>
+          </label>
+          <label>Kondisi sawah
+            <select id="lapKondisi"></select>
+          </label>
+          <label>Nama pelapor
+            <input type="text" id="lapPelapor" placeholder="mis. Pak Darman" required />
+          </label>
+          <label>Catatan <span class="opsional">opsional</span>
+            <input type="text" id="lapCatatan" placeholder="mis. saluran tersier kering" />
+          </label>
+        </div>
+        <div class="kecil" id="lapCiri" style="margin-top:8px"></div>
+        <div class="baris-tombol">
+          <button type="submit" class="tombol tombol-utama">📨 Kirim laporan</button>
+          <span class="petunjuk" id="lapInfo"></span>
+        </div>
+      </form>
+      <div class="kartu" data-bagian="rekapLaporan">
+        <div class="kepala-kartu">
+          <h2>Rekap laporan vs prediksi <span class="redup">· umpan balik untuk validasi model</span></h2>
+          <div class="baris-tombol rapat" data-bagian="kelolaLaporan">
+            <button type="button" class="tombol" id="tombolEksporLaporan">⬇ Ekspor CSV</button>
+          </div>
+        </div>
+        <div id="rekapLaporan"></div>
+      </div>
+    </section>
+
+    <!-- 7. GRAFIK -->
+    <section class="grid-grafik">
+      <div class="kartu" data-bagian="grafik"><h2>SPI-3: observasi vs prediksi RF</h2><div class="kanvas-wadah"><canvas id="grafikSpi"></canvas></div></div>
+      <div class="kartu" data-bagian="grafik"><h2>SPEI-3: observasi vs prediksi RF</h2><div class="kanvas-wadah"><canvas id="grafikSpei"></canvas></div></div>
+      <div class="kartu" data-bagian="grafik"><h2>Skor bahaya H: observasi vs prediksi</h2><div class="kanvas-wadah"><canvas id="grafikH"></canvas></div></div>
+      <div class="kartu" data-bagian="kinerja">
+        <h2>Kinerja model (dibanding metode pembanding)</h2>
+        <div id="tabelKinerja"></div>
+      </div>
+      <div class="kartu lebar-penuh" data-bagian="riwayat">
+        <div class="kepala-kartu">
+          <h2>Riwayat SPI-3 & SPEI-3 observasi 1991–2023 <span class="redup">· data latih, validasi, dan uji Random Forest</span></h2>
+          <span class="petunjuk" id="infoRiwayat"></span>
+        </div>
+        <div class="kanvas-wadah tinggi"><canvas id="grafikRiwayat"></canvas></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 8. FOOTER -->
+  <footer class="footer">
+    Sumber data: NASA POWER harian 1991–2023 (hujan, suhu, RH, angin, radiasi → ET₀ FAO-56 Penman-Monteith),
+    <span id="infoStasiun"></span> 2022–2023 dan normal/prakiraan BMKG ZOM SULTRA_13.
+    Model prediksi Random Forest (Python/Colab). · <b>Prototipe – data lahan dummy.</b>
+  </footer>
+
+  <!-- Library -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Urutan penting: config → data → rumus → tampilan -->
+  <script src="js/config.js"></script>
+  <script src="js/data-hazard.js"></script>
+  <script src="js/data-lahan.js"></script>
+  <script src="js/rumus.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
