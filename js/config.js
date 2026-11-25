@@ -164,7 +164,7 @@ window.CONFIG = {
     hujanTurun:     { min: 0, max: 50,   langkah: 5,   satuan: "%" },
     et0Naik:        { min: 0, max: 30,   langkah: 5,   satuan: "%" },
     irigasiTurun:   { min: 0, max: 100,  langkah: 10,  satuan: "%" },
-    tambahEmbung:   { min: 0, max: 1000, langkah: 50,  satuan: " m³" },
+    tambahEmbung:   { min: 0, max: 5000, langkah: 100, satuan: " m³" },
     tambahJamPompa: { min: 0, max: 8,    langkah: 1,   satuan: " jam" },
   },
 
